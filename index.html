@@ -155,10 +155,9 @@
       model = await tmImage.load(URL + "model.json", URL + "metadata.json");
       maxPredictions = model.getTotalClasses();
 
-      // 🟢 Usamos configuración por defecto (sin constraints, sin flip)
-      //webcam = new tmImage.Webcam(320, 320);
-      webcam = new tmImage.Webcam(320, 320, true);
-      await webcam.setup(); // configuración por defecto del navegador
+      const flip = true; // Activamos el espejo para coincidir con entrenamiento
+      webcam = new tmImage.Webcam(320, 320, flip);
+      await webcam.setup(); // Usa configuración por defecto
       await webcam.play();
 
       window.requestAnimationFrame(loop);
@@ -215,7 +214,6 @@
         }
       });
 
-      // Mostrar imagen grande de la clase ganadora
       const imagePath = `img/${topClass.className}.png`;
       const winnerImage = document.getElementById("winner-image");
       winnerImage.src = imagePath;
