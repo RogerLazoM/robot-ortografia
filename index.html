@@ -155,13 +155,18 @@
       model = await tmImage.load(URL + "model.json", URL + "metadata.json");
       maxPredictions = model.getTotalClasses();
 
-      //webcam = new tmImage.Webcam(320, 320, true);
-      const flip = false; // No invertir para cámara trasera
-         webcam = new tmImage.Webcam(320, 320, flip, false, {
-         facingMode: { exact: "environment" }
-      });
-      await webcam.setup();
+      const flip = false; // No volteamos imagen para cámara trasera
+      const constraints = {
+      video: {
+        facingMode: { ideal: "environment" } // O exact si quieres forzar
+      }
+      };
+
+      webcam = new tmImage.Webcam(320, 320, flip);
+      await webcam.setup(constraints); // Usa los constraints personalizados
       await webcam.play();
+      //await webcam.setup();
+      //await webcam.play();
       window.requestAnimationFrame(loop);
 
       document.getElementById("webcam-container").appendChild(webcam.canvas);
