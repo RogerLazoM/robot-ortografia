@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clasificador de Palabras</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f8ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #005ecb;
+      color: white;
+    }
+
+    header img {
+      height: 60px;
+      margin-right: 20px;
+    }
+
+    header div {
+      line-height: 1.2;
+    }
+
+    main {
+      text-align: center;
+      padding: 20px;
+    }
+
+    #webcam-container {
+      margin-top: 20px;
+    }
+
+    #main-content {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* 🔼 Esto alinea verticalmente */
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+    #label-container {
+      width: 400px;
+    }
+
+    .bar-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .label {
+      width: 80px;
+      font-weight: bold;
+      text-align: left;
+    }
+
+    .bar {
+      flex: 1;
+      height: 25px;
+      background-color: #d0d0d0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-left: 10px;
+    }
+
+    .fill {
+      height: 100%;
+      text-align: left;
+      color: white;
+      line-height: 25px;
+      padding-left: 10px;
+      border-radius: 8px;
+    }
+
+    #winner-image-container {
+      min-width: 200px;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    #winner-image {
+      width: 100%;
+      max-width: 150px;
+      height: auto;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #005ecb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 16px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="img/logo.png" alt="Logo del colegio">
+    <div>
+      <strong>Institución Educativa Emblemática N°1070 Melitón Carvajal</strong><br>
+      2do "B" Primaria<br>
+      Alumno: Jahaziel Lazo
+    </div>
+  </header>
+
+  <main>
+    <h1>¡Clasificador Inteligente de Palabras!</h1>
+    <p>Muéstrale una palabra escrita al robot inteligente y él te dirá qué es.</p>
+
+    <button id="start-button">Empezar cámara</button>
+    <div id="webcam-container"></div>
+
+    <div id="main-content">
+      <div id="label-container"></div>
+      <div id="winner-image-container">
+        <h3>Imagen reconocida:</h3>
+        <img id="winner-image" src="" alt="Resultado">
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const URL = "./model/";
+
+    let model, webcam, maxPredictions;
+
+    const classColors = {
+      "casa": "#ff595e",
+      "mal": "#ffca3a",
+      "vaca": "#8ac926",
+      "bicicleta": "#1982c4"
+    };
+
+    async function init() {
+      model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+      maxPredictions = model.getTotalClasses();
+
+      //webcam = new tmImage.Webcam(320, 320, true);
+      const flip = false; // No invertir para cámara trasera
+         webcam = new tmImage.Webcam(320, 320, flip, false, {
+         facingMode: { exact: "environment" }
+      });
+      await webcam.setup();
+      await webcam.play();
+      window.requestAnimationFrame(loop);
+
+      document.getElementById("webcam-container").appendChild(webcam.canvas);
+      document.getElementById("start-button").style.display = "none";
+
+      const labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = "";
+
+      const orderedClasses = ["casa", "vaca", "bicicleta", "mal"];
+      orderedClasses.forEach(className => {
+        const container = document.createElement("div");
+        container.className = "bar-container";
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.innerText = className;
+
+        const bar = document.createElement("div");
+        bar.className = "bar";
+
+        const fill = document.createElement("div");
+        fill.className = "fill";
+        fill.style.width = "0%";
+        fill.style.backgroundColor = classColors[className] || "#888";
+        fill.id = "bar-" + className;
+
+        bar.appendChild(fill);
+        container.appendChild(label);
+        container.appendChild(bar);
+        labelContainer.appendChild(container);
+      });
+    }
+
+    async function loop() {
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+      const prediction = await model.predict(webcam.canvas);
+
+      let topClass = prediction[0];
+      prediction.forEach(p => {
+        const percent = (p.probability * 100).toFixed(2);
+        const bar = document.getElementById("bar-" + p.className);
+        bar.style.width = percent + "%";
+        bar.innerText = percent + "%";
+
+        if (p.probability > topClass.probability) {
+          topClass = p;
+        }
+      });
+
+      // Mostrar imagen grande de la clase ganadora
+      const imagePath = `img/${topClass.className}.png`;
+      const winnerImage = document.getElementById("winner-image");
+      winnerImage.src = imagePath;
+      winnerImage.alt = topClass.className;
+    }
+
+    document.getElementById("start-button").addEventListener("click", init);
+  </script>
+
+</body>
+</html>
