@@ -156,7 +156,8 @@
       maxPredictions = model.getTotalClasses();
 
       // 🟢 Usamos configuración por defecto (sin constraints, sin flip)
-      webcam = new tmImage.Webcam(320, 320);
+      //webcam = new tmImage.Webcam(320, 320);
+      webcam = new tmImage.Webcam(320, 320, true);
       await webcam.setup(); // configuración por defecto del navegador
       await webcam.play();
 
