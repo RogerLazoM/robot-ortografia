@@ -40,13 +40,13 @@
     }
 
     #main-content {
-  display: flex;
-  justify-content: center;
-  align-items: center; /* 🔼 Esto alinea verticalmente */
-  gap: 30px;
-  flex-wrap: wrap;
-  margin-top: 30px;
-}
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
 
     #label-container {
       width: 400px;
@@ -155,18 +155,11 @@
       model = await tmImage.load(URL + "model.json", URL + "metadata.json");
       maxPredictions = model.getTotalClasses();
 
-      const flip = false; // No volteamos imagen para cámara trasera
-      const constraints = {
-      video: {
-        facingMode: { exact: "environment" } // O exact si quieres forzar
-      }
-      };
-
-      webcam = new tmImage.Webcam(320, 320, flip);
-      await webcam.setup(constraints); // Usa los constraints personalizados
+      // 🟢 Usamos configuración por defecto (sin constraints, sin flip)
+      webcam = new tmImage.Webcam(320, 320);
+      await webcam.setup(); // configuración por defecto del navegador
       await webcam.play();
-      //await webcam.setup();
-      //await webcam.play();
+
       window.requestAnimationFrame(loop);
 
       document.getElementById("webcam-container").appendChild(webcam.canvas);
